@@ -343,3 +343,52 @@ int T2Predictor_GetPlan_Ext(char *filename,
   return 0;
 }
 
+// Shi Dai 2014.12
+int T2Predictor_ReadFits(T2Predictor *t2p, char *fname)
+{
+  fitsfile *f;
+	int status; 
+	status = 0;
+
+	if ( fits_open_file(&f, fname, READONLY, &status) )          // open the file
+	{
+		printf( "error while openning file\n" );
+	}
+
+	// move to the Predictor
+	fits_movnam_hdu(f,BINARY_TBL,(char *)"T2PREDICT",0,&status);
+
+  int ret;
+  //printf("step1\n");
+  if (!f)
+    return -1;
+  //printf("Got here\n");
+  ret = T2Predictor_FReadFits(t2p, f);
+  //printf("and here %d\n",ret);
+	
+	if ( fits_close_file(f, &status) )
+	{
+		printf( " error while closing the file\n " );
+	}
+
+  return ret;
+}
+  
+int T2Predictor_FReadFits(T2Predictor *t2p, fitsfile *f)
+{
+  // determine the kind of file we're dealing with by trial and error
+  if (ChebyModelSet_ReadFits(&t2p->modelset.cheby, f)==0)
+  {
+    t2p->kind = Cheby;
+    return 0;
+  }
+ 
+  //if (T1PolycoSet_Read(&t2p->modelset.t1, f)==0)
+  //{
+  //  t2p->kind = T1;
+  //  return 0;
+  //}
+
+	return -1;
+}
+  

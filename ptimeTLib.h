@@ -79,7 +79,7 @@ int off_pulse (int nphase, int index, double *in, double *out, double frac_off);
 int remove_baseline (double *in, int index, double frac_off, int n, double *out);
 int pre_diff (double *s, int nphase, int index, double frac_off, double *s_out);
 int InitialGuess (double *s, double *p, int nphase, int nchn, int *chn);
-int preA7_QUV (double *p, int nphase, int nchn, double *real_p, double *ima_p);
+int preA7_QUV (double *p, int nphase, double *real_p, double *ima_p);
 int rotate (int N, double *real_p, double *real_p_rotate, double *ima_p, double *ima_p_rotate, double rot);
 int align (int N, double phase, double b, double a, double *real_p, double *real_p_align, double *ima_p, double *ima_p_align, double rotate);
 int inverse_dft (double *real_p, double *ima_p, int ncount, double *p_new);

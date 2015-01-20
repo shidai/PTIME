@@ -73,6 +73,10 @@ long double ChebyModelSet_GetFrequency(const ChebyModelSet *cms, long double mjd
 void ChebyModelSet_Write(const ChebyModelSet *cms, FILE *f);
 int ChebyModelSet_Read(ChebyModelSet *cms, FILE *f);
 
+// Shi Dai 2014.12
+int ChebyModelSet_ReadFits(ChebyModelSet *cms, fitsfile *f);
+int ChebyModel_ReadFits(ChebyModel *cm, fitsfile *f, int *row0);
+
 void ChebyModelSet_Init(ChebyModelSet *cms);
 int ChebyModelSet_Insert(ChebyModelSet *cms, const ChebyModelSet *from);
 void ChebyModelSet_Destroy(ChebyModelSet *cms);

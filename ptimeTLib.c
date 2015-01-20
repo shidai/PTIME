@@ -204,10 +204,10 @@ int read_prof (subintegration *sub, pheader *header)
 	double period;
 
 	// get the period
-	print_t2pred(sub->fname);   // output t2pred.dat
+	//print_t2pred(sub->fname);   // output t2pred.dat
 	T2Predictor_Init(&pred);  // prepare the predictor
 	
-	if (ret=T2Predictor_Read(&pred,(char *)"t2pred.dat"))
+	if (ret=T2Predictor_ReadFits(&pred,sub->fname))
 	{
 		printf("Error: unable to read predictor\n");
 		exit(1);
@@ -223,6 +223,8 @@ int read_prof (subintegration *sub, pheader *header)
 	{
 		sub->period[z] = 1.0/T2Predictor_GetFrequency(&pred,mjd0,sub->freq[z]);
 	}
+
+	T2Predictor_Destroy(&pred);
 
 	return 0;
 }
@@ -1452,7 +1454,7 @@ int InitialGuess (double *s, double *p, int nphase, int nchn, int *chn)
 	return d;
 }
 
-int preA7_QUV (double *p, int nphase, int nchn, double *real_p, double *ima_p)
+int preA7_QUV (double *p, int nphase, double *real_p, double *ima_p)
 // preparation for calculating A7 of Talyor 1992  
 {
 	// nphase is the dimention of one profile, nchn is number of profiles
@@ -1467,26 +1469,22 @@ int preA7_QUV (double *p, int nphase, int nchn, double *real_p, double *ima_p)
 	
 	double p_temp[nphase];  // store one template and profile
 
-	for (i = 0; i < nchn; i++)
+	for (j=0;j<nphase;j++)
 	{
-	    for (j=0;j<nphase;j++)
-	    {
-		    p_temp[j]=p[i*nphase + j];
-	    }
-
-	    dft_profiles(nphase,p_temp,out_p);
-
-	    //double amp_s[N/2],phi_s[N/2];
-	    //double amp_p[N/2],phi_p[N/2];
-
-		for (j = 0; j < nphase/2+1; j++)                                                  
-		{                                                                      
-			real_p[j]=out_p[j][0];                                             
-			ima_p[j]=out_p[j][1];                                              
-		}
-										
+	  p_temp[j]=p[i*nphase + j];
 	}
 
+	dft_profiles(nphase,p_temp,out_p);
+
+	//double amp_s[N/2],phi_s[N/2];
+	//double amp_p[N/2],phi_p[N/2];
+
+	for (j = 0; j < nphase/2+1; j++)                                                  
+	{                                                                      
+		real_p[j]=out_p[j][0];                                             
+		ima_p[j]=out_p[j][1];                                              
+	}
+										
 	fftw_free(out_p); 
 	//fftw_free(out_t); 
 

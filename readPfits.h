@@ -20,6 +20,7 @@ typedef struct pheader {
   int npol;  // Number of polarisations
   float tsamp; // Sample time
   float freq;  // Centre frequency for observation
+  float freqSSB;  // Centre frequency for observation at the SSB
   float bw;    // Observation bandwidth
   float zeroOff; // Zero offsets
   int   imjd;  // Integer start time (day)

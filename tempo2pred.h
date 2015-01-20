@@ -29,6 +29,7 @@
 #define TEMPO2PRED_H
 
 #include <stdio.h>
+#include "fitsio.h"
 
 #ifdef __cplusplus
 #include <string>
@@ -130,6 +131,11 @@ extern "C" {
   int T2Predictor_FRead(T2Predictor *t2p, FILE *f);
   void T2Predictor_Write(const T2Predictor *t2p, char *fname);
   void T2Predictor_FWrite(const T2Predictor *t2p, FILE *f);
+
+
+	// by Shi Dai 2014.12
+	int T2Predictor_ReadFits(T2Predictor *t2p, char *fname);
+	int T2Predictor_FReadFits(T2Predictor *t2p, fitsfile *f);
 
   /* Information */
   char * T2Predictor_GetPSRName(T2Predictor *t2p);
