@@ -233,7 +233,7 @@ int read_std (subintegration *sub, pheader *header)
 {  
 	int mode = sub->mode;
 	int nphase = header->nbin;
-	int nchn = header->nchn;
+	int nchn = header->nchan;
 
 	int i,j;
 	// currently, npol should be 1
@@ -370,7 +370,7 @@ int read_std (subintegration *sub, pheader *header)
 					{
 						for (j = 0; j < nphase; j++)
 						{
-							sub_s_multi[k*tmpl.nchan*nphase+i*nphase+j] = sub->s_multi[k*tmpl.nchan*nphase+j];
+							sub->s_multi[k*tmpl.nchan*nphase+i*nphase+j] = sub->s_multi[k*tmpl.nchan*nphase+j];
 						}
 					}
 				}
