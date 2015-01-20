@@ -171,6 +171,9 @@ int main (int argc, char *argv[])
 		free(p_temp_deDM);
 	}
 
+	free(header);
+	demallocSub(sub, header);
+
 	T2Predictor_Destroy(&pred);
 
 	return 0;
