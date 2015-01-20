@@ -53,7 +53,7 @@ typedef struct params {
 } params;
 
 int print_t2pred ( char *name );
-int read_std ( char *name, double *profile, int nphase, int mode, int nchn);
+int read_std (subintegration *sub, pheader *header);
 int read_prof (subintegration *sub, pheader *header);
 
 int dft_profiles (int N, double *in, fftw_complex *out);

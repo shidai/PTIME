@@ -133,6 +133,7 @@ int main (int argc, char *argv[])
 		double p_temp[nphase];
 
 		initialiseSub(sub, header);
+		read_std (sub, header);
 
 		// start to derive toa from different subint
 		for (h = 1; h <= nsub; h++)

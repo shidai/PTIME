@@ -229,8 +229,12 @@ int read_prof (subintegration *sub, pheader *header)
 	return 0;
 }
 
-int read_std ( char *name, double *profile, int nphase, int mode, int nchn)
+int read_std (subintegration *sub, pheader *header)
 {  
+	int mode = sub->mode;
+	int nphase = header->nbin;
+	int nchn = header->nchn;
+
 	int i,j;
 	// currently, npol should be 1
 	// nchn is the number of channel of the data profile
@@ -243,8 +247,7 @@ int read_std ( char *name, double *profile, int nphase, int mode, int nchn)
 
 		status = 0;
 
-		//if ( fits_open_file(&fptr, argv[1], READONLY, &status) )          // open the file
-		if ( fits_open_file(&fptr, name, READONLY, &status) )          // open the file
+		if ( fits_open_file(&fptr, sub->tname, READONLY, &status) )          // open the file
 		{
 			printf( "error while openning file\n" );
 		}
@@ -308,7 +311,7 @@ int read_std ( char *name, double *profile, int nphase, int mode, int nchn)
 			anynull = 0;
 
 			//printf ("%d\n", nbin);
-			fits_read_col(fptr, TDOUBLE, colnum, frow, felem, nelem, &null, profile, &anynull, &status);           // read the column
+			fits_read_col(fptr, TDOUBLE, colnum, frow, felem, nelem, &null, sub->s_multi, &anynull, &status);           // read the column
 			//fits_read_col(fptr, TDOUBLE, colnum, frow, felem, nelem, &null, temp, &anynull, &status);           // read the column
 
 			if ( fits_close_file(fptr, &status) )
@@ -323,7 +326,7 @@ int read_std ( char *name, double *profile, int nphase, int mode, int nchn)
 				{
 					for (j = 0; j < nphase; j++)
 					{
-						profile[i*nphase+j] = profile[j];
+						sub->s_multi[i*nphase+j] = sub->s_multi[j];
 					}
 				}
 			}
@@ -334,7 +337,7 @@ int read_std ( char *name, double *profile, int nphase, int mode, int nchn)
 		tmplStruct tmpl;
 		initialiseTemplate(&tmpl);
 		//printf("Reading template\n");
-		readTemplate(name,&tmpl);
+		readTemplate(sub->tname,&tmpl);
 	    //printf("Complete reading template\n");
 
 		int i,j,k;
@@ -353,7 +356,7 @@ int read_std ( char *name, double *profile, int nphase, int mode, int nchn)
 					for (j = 0; j < nphase; j++)
 					{
 						phi = j/(double)nphase;
-						profile[k*tmpl.nchan*nphase+i*nphase+j] = (double)evaluateTemplateChannel(&tmpl,phi,i,k,0);
+						sub->s_multi[k*tmpl.nchan*nphase+i*nphase+j] = (double)evaluateTemplateChannel(&tmpl,phi,i,k,0);
 					}
 				}
 			}
@@ -367,7 +370,7 @@ int read_std ( char *name, double *profile, int nphase, int mode, int nchn)
 					{
 						for (j = 0; j < nphase; j++)
 						{
-							profile[k*tmpl.nchan*nphase+i*nphase+j] = profile[k*tmpl.nchan*nphase+j];
+							sub_s_multi[k*tmpl.nchan*nphase+i*nphase+j] = sub->s_multi[k*tmpl.nchan*nphase+j];
 						}
 					}
 				}
@@ -2259,8 +2262,6 @@ void initialiseSub(subintegration *sub, pheader *header)
 
 	sub->s_multi = (double *)malloc(sizeof(double)*nchn*npol*nphase);
 	sub->p_multi = (double *)malloc(sizeof(double)*nchn*npol*nphase);
-
-	read_std(sub->tname,sub->s_multi,nphase,mode,nchn);
 }
 
 void demallocSub(subintegration *sub, pheader *phead)
