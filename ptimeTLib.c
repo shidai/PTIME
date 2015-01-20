@@ -279,8 +279,15 @@ int read_std (subintegration *sub, pheader *header)
 		//printf ("%d\n", nchan);
 		///////////////////////////////////////////////////////////////////////////
 
-		// read the data
 		int nbin;
+		if ( fits_read_key(fptr, TINT, (char *)"NBIN", &nbin, NULL, &status) )           // get the chan number
+		{
+			printf( "error while getting the nbin number\n" );
+			//fits_get_colnum(fptr, CASEINSEN, "DATA", &colnum, &status);
+		}
+		///////////////////////////////////////////////////////////////////////////
+		
+		// read the data
 		int frow;
 		int felem;
 		int nelem;
@@ -302,7 +309,6 @@ int read_std (subintegration *sub, pheader *header)
 		}
 		else
 		{
-			nbin = nphase;
 			frow = 1;
 			felem = 1;
 			nelem = nbin*nchan*npol;
@@ -1462,7 +1468,7 @@ int preA7_QUV (double *p, int nphase, double *real_p, double *ima_p)
 {
 	// nphase is the dimention of one profile, nchn is number of profiles
 	// k is the dimention of amp of one profile 
-	int i,j;
+	int j;
 	
 	/////////////////////////////////////////////////////////////////////////////////
 
@@ -1474,18 +1480,16 @@ int preA7_QUV (double *p, int nphase, double *real_p, double *ima_p)
 
 	for (j=0;j<nphase;j++)
 	{
-	  p_temp[j]=p[i*nphase + j];
+	  p_temp[j]=p[j];
 	}
 
 	dft_profiles(nphase,p_temp,out_p);
 
-	//double amp_s[N/2],phi_s[N/2];
-	//double amp_p[N/2],phi_p[N/2];
-
-	for (j = 0; j < nphase/2+1; j++)                                                  
+	for (j = 0; j < nphase/2; j++)                                                  
 	{                                                                      
 		real_p[j]=out_p[j][0];                                             
 		ima_p[j]=out_p[j][1];                                              
+		//printf ("%lf %lf\n", out_p[j][0], out_p[j][1]);
 	}
 										
 	fftw_free(out_p); 
@@ -1501,7 +1505,7 @@ int rotate (int N, double *real_p, double *real_p_rotate, double *ima_p, double 
 
 	// for substraction 
 	double amp,cosina,sina;
-	for (i=0;i<N/2+1;i++)
+	for (i=0;i<N/2;i++)
 	{
 		// calculate the sin(phi) and cos(phi) of the profile
 		amp=sqrt(real_p[i]*real_p[i]+ima_p[i]*ima_p[i]);
@@ -1509,8 +1513,8 @@ int rotate (int N, double *real_p, double *real_p_rotate, double *ima_p, double 
 		sina=ima_p[i]/amp;
 
 		// rotate profile
-		real_p_rotate[i]=amp*(cosina*cos(-i*rot*M_PI)-sina*sin(-i*rot*M_PI));
-		ima_p_rotate[i]=amp*(sina*cos(-i*rot*M_PI)+cosina*sin(-i*rot*M_PI));
+		real_p_rotate[i]=amp*(cosina*cos(-i*rot)-sina*sin(-i*rot));
+		ima_p_rotate[i]=amp*(sina*cos(-i*rot)+cosina*sin(-i*rot));
 		//real_p_rotate[i]=amp*(cosina*cos(-i*M_PI)-sina*sin(-i*M_PI));
 		//ima_p_rotate[i]=amp*(sina*cos(-i*M_PI)+cosina*sin(-i*M_PI));
 		
@@ -1550,73 +1554,43 @@ int align (int N, double phase, double b, double a, double *real_p, double *real
 
 int inverse_dft (double *real_p, double *ima_p, int ncount, double *p_new)
 {
+	int i;
+	double real,ima,amp,cosina,sina;
+
 	double *dp;
-    fftw_plan plan;
+	fftw_plan plan;
 	fftw_complex *cp;
 
-    dp = (double *)malloc(sizeof (double) * ncount);
+	dp = (double *)malloc(sizeof (double) * ncount);
 	cp = (fftw_complex *)fftw_malloc(sizeof (fftw_complex) * ncount);
 	memset(dp, 0, sizeof (double) * ncount);
 	memset(cp, 0, sizeof (fftw_complex) * ncount);
 
-	// initialize the dft...
-	double *dp_t;
-    fftw_plan plan_t;
-	fftw_complex *cp_t;
-
-    dp_t = (double *)malloc(sizeof (double) * ncount);
-	cp_t = (fftw_complex *)fftw_malloc(sizeof (fftw_complex) * ncount);
-	memset(dp_t, 0, sizeof (double) * ncount);
-	memset(cp_t, 0, sizeof (fftw_complex) * ncount);
-
-	int i;
-    double real,ima,amp,cosina,sina;
+  plan = fftw_plan_dft_c2r_1d(ncount, cp, dp, FFTW_MEASURE);
 
 	for (i = 0; i < ncount; i++)
 	{
-		if (i < ncount/2+1)
+		if (i < ncount/2)
 		{
-            real = real_p[i];
-            ima = ima_p[i];
+			real = real_p[i];
+			ima = ima_p[i];
 			amp = sqrt(real*real+ima*ima);
 			cosina = real/amp;
 			sina = ima/amp;
 
 			cp[i][0] = amp*(cosina);
 			cp[i][1] = amp*(sina);
-			//cp[i][0] = amp*(cosina*cos(-i*3.1415926)-sina*sin(-i*3.1415926));
-			//cp[i][1] = amp*(sina*cos(-i*3.1415926)+cosina*sin(-i*3.1415926));
-			//cp[i][0]=real_s[i]-real_p[i];
-			//cp[i][1]=ima_s[i]-ima_p[i];
-			//cp[i][0]=-real_s[i]+real_p[i];
-			//cp[i][1]=-ima_s[i]+ima_p[i];
-			cp_t[i][0] = real_p[i];
-			cp_t[i][1] = ima_p[i];
-			//cp[i][0]=real_p[i];
-			//cp[i][1]=ima_p[i];
 		}
 		else
 		{
 			cp[i][0]=0.0;
 			cp[i][1]=0.0;
-			cp_t[i][0]=0.0;
-			cp_t[i][1]=0.0;
 		}
 	}
 
-    plan_t = fftw_plan_dft_c2r_1d(ncount, cp_t, dp_t, FFTW_MEASURE);
+  fftw_execute(plan);
 
-    fftw_execute(plan_t);
-
-    fftw_destroy_plan(plan_t);
-
-	/////////////////////////////////////////////////////////////////
-
-    plan = fftw_plan_dft_c2r_1d(ncount, cp, dp, FFTW_MEASURE);
-
-    fftw_execute(plan);
-
-    fftw_destroy_plan(plan);
+  fftw_destroy_plan(plan);
 
 	for (i = 0; i < ncount; i++)
 	{

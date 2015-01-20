@@ -30,7 +30,7 @@ int write_prof (subintegration *sub, pheader *header, double *profile)
   int frow;
   int felem;
   int nelem;
-  int null;
+	int null;
   //int anynull;
 
   frow = sub->indexSub;
@@ -76,7 +76,6 @@ int modify_freq (subintegration *sub, pheader *header)
   int frow;
   int	felem = 1;
   int nelem = header->nchan;
-  int null = 0;
   //int	anynull = 0;
 
 	//int subint = 1;
@@ -182,7 +181,7 @@ double phaseShiftDM (subintegration *sub, pheader *header, T2Predictor pred)
 		//phaseShift = -T2Predictor_GetPhase(&pred, mjd, freq);
 	}
 
-	printf ("Predictor: %lf %lf %lf\n", freq, mjd0, phase);
+	//printf ("Predictor: %lf %Lf %lf\n", freq, mjd0, phase);
 
 	return phaseShift;
 }
@@ -190,7 +189,6 @@ double phaseShiftDM (subintegration *sub, pheader *header, T2Predictor pred)
 int deDM (int nphase, int npol, double *in, double phaseShift, double *out)
 // de-disperse 
 {
-	//printf ("npol: %d\n", npol);
 	int i, j;
 	
 	double I_in[nphase], Q_in[nphase], U_in[nphase], V_in[nphase];
@@ -223,10 +221,10 @@ int deDM (int nphase, int npol, double *in, double phaseShift, double *out)
 		}
 	}
 
-	double I_in_real[nphase/2+1], I_in_ima[nphase/2+1];
-	double Q_in_real[nphase/2+1], Q_in_ima[nphase/2+1];
-	double U_in_real[nphase/2+1], U_in_ima[nphase/2+1];
-	double V_in_real[nphase/2+1], V_in_ima[nphase/2+1];
+	double I_in_real[nphase/2], I_in_ima[nphase/2];
+	double Q_in_real[nphase/2], Q_in_ima[nphase/2];
+	double U_in_real[nphase/2], U_in_ima[nphase/2];
+	double V_in_real[nphase/2], V_in_ima[nphase/2];
 
 	preA7_QUV (I_in, nphase, I_in_real, I_in_ima);
 
@@ -237,10 +235,10 @@ int deDM (int nphase, int npol, double *in, double phaseShift, double *out)
   	preA7_QUV (V_in, nphase, V_in_real, V_in_ima);
 	}
 
-	double I_out_real[nphase/2+1], I_out_ima[nphase/2+1];
-	double Q_out_real[nphase/2+1], Q_out_ima[nphase/2+1];
-	double U_out_real[nphase/2+1], U_out_ima[nphase/2+1];
-	double V_out_real[nphase/2+1], V_out_ima[nphase/2+1];
+	double I_out_real[nphase/2], I_out_ima[nphase/2];
+	double Q_out_real[nphase/2], Q_out_ima[nphase/2];
+	double U_out_real[nphase/2], U_out_ima[nphase/2];
+	double V_out_real[nphase/2], V_out_ima[nphase/2];
 	rotate (nphase, I_in_real, I_out_real, I_in_ima, I_out_ima, phaseShift);
 	if (npol == 4)
 	{

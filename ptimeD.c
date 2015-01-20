@@ -56,7 +56,6 @@ int main (int argc, char *argv[])
 	sub->mode = pmode;
 		
 	T2Predictor pred;
-	int ret;
 
 	T2Predictor_Init(&pred);  // prepare the predictor
 				
@@ -105,7 +104,7 @@ int main (int argc, char *argv[])
 
     initialiseSub(sub, header);
 
-		if (ret=T2Predictor_ReadFits(&pred,sub->fname))
+		if (T2Predictor_ReadFits(&pred,sub->fname))
 		{
 			printf("Error: unable to read predictor\n");
 			exit(1);
@@ -135,6 +134,7 @@ int main (int argc, char *argv[])
 			for (i = 0; i < nchn; i++)
 			{
 				sub->indexChn = i;
+				//printf ("Chan%d\n", sub->indexChn);
 
 				n = 0;
 				for (nstokes = 0; nstokes < npol; nstokes++)
@@ -151,14 +151,12 @@ int main (int argc, char *argv[])
 				phaseShift = phaseShiftDM (sub,header,pred);
 				deDM (nphase, npol, p_temp, phaseShift, p_temp_deDM);
 
-				n = 0;
 				for (nstokes = 0; nstokes < npol; nstokes++)
 				{
 					for (j = 0; j < nphase; j++)
 					{
 						p_multi_deDM[nstokes*nchn*nphase + i*nphase + j] = p_temp_deDM[j];
 						//printf ("%d %lf\n", j, p_temp_deDM[j]);
-						n++;
 					}
 				}
 			}
