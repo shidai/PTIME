@@ -30,13 +30,13 @@ int write_prof (subintegration *sub, pheader *header, double *profile)
   int frow;
   int felem;
   int nelem;
-	int null;
+	//int null;
   //int anynull;
 
   frow = sub->indexSub;
   felem = 1;
   nelem = header->nbin*header->nchan*header->npol;
-  null = 0;
+  //null = 0;
 
   //fits_read_col(fptr, TDOUBLE, colnum, frow, felem, nelem, &null, profile, &anynull, &status);           // read the column
 	fits_write_col(fptr, TDOUBLE, colnum, frow, felem, nelem, profile, &status);           // read the column
@@ -152,7 +152,7 @@ int createNewfile (char *input, char *output, char *ext)
 	return 0;
 }
 
-double phaseShiftDM (subintegration *sub, pheader *header, T2Predictor pred)
+long double phaseShiftDM (subintegration *sub, pheader *header, T2Predictor pred)
 {
 	double dm = header->dm;
 	double freq = sub->freq[sub->indexChn];
@@ -160,10 +160,11 @@ double phaseShiftDM (subintegration *sub, pheader *header, T2Predictor pred)
 	double freqRef = header->freq;
 
 	long double mjd0;
+	//mjd0 = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs))/86400.0L;
 	mjd0 = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs) + (long double)(sub->offs))/86400.0L;
 
-	double phase;
-	double phaseShift;
+	long double phase;
+	long double phaseShift;
 
 	if (sub->mode == 1)
 	{
@@ -181,12 +182,13 @@ double phaseShiftDM (subintegration *sub, pheader *header, T2Predictor pred)
 		//phaseShift = -T2Predictor_GetPhase(&pred, mjd, freq);
 	}
 
+	//printf ("%.15Lf %.15lf\n", mjd0, sub->offs);
 	//printf ("Predictor: %lf %Lf %lf\n", freq, mjd0, phase);
 
 	return phaseShift;
 }
 
-int deDM (int nphase, int npol, double *in, double phaseShift, double *out)
+int deDM (int nphase, int npol, double *in, long double phaseShift, double *out)
 // de-disperse 
 {
 	int i, j;

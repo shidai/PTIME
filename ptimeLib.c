@@ -41,59 +41,65 @@ void readTemplate(char *file,tmplStruct *tmpl)
     exit(1);
   }
   while (!feof(fin))
-    {
-      if (fgets(line,4096,fin) != NULL){
-	if (line[0] == '#') // Comment line
-	  {
-	    // Do nothing
-	  }
-	else {
-	  sscanf(line,"%s",firstword);
-	  if (strcasecmp(firstword,"TEMPLATE_VERSION:")==0)
-	    sscanf(line,"%s %f",dummy,&(tmpl->templateVersion));
-	  else if (strcasecmp(firstword,"SOURCE:")==0)
-	    sscanf(line,"%s %s",dummy,(tmpl->source));
-	  else if (strcasecmp(firstword,"PROFILE_FILE:")==0)
-	    sscanf(line,"%s %s",dummy,(tmpl->profileFile));
-	  else if (strcasecmp(firstword,"DATE:")==0)
-	    sscanf(line,"%s %s",dummy,(tmpl->dte));
-	  else if (strcasecmp(firstword,"UNITS:")==0)
-	    sscanf(line,"%s %s",dummy,(tmpl->units));
-	  else if (strcasecmp(firstword,"ID:")==0)
-	    sscanf(line,"%s %s",dummy,(tmpl->user));
-	  else if (strcasecmp(firstword,"DM_CORRECTION:")==0)
-	    sscanf(line,"%s %lf",dummy,&(tmpl->dedispersed));
-	  else if (strcasecmp(firstword,"NCHAN:")==0)
-	    sscanf(line,"%s %d",dummy,&nchan);
-	  else if (strcasecmp(firstword,"STOKES:")==0)
-	    {
-	      sscanf(line,"%s %s",dummy,stokesStr);
-	      if (strcmp(stokesStr,"I")==0)
-		nstokes=1;
-	      else if (strcmp(stokesStr,"Q")==0 || strcmp(stokesStr,"U")==0 || strcmp(stokesStr,"V")==0)
-		nstokes=4;
-	    }
+	{
+		if (fgets(line,4096,fin) != NULL)
+		{
+			if (line[0] == '#') // Comment line
+			{
+				// Do nothing
+			}
+			else 
+			{
+				sscanf(line,"%s",firstword);
+				if (strcasecmp(firstword,"TEMPLATE_VERSION:")==0)
+					sscanf(line,"%s %f",dummy,&(tmpl->templateVersion));
+				else if (strcasecmp(firstword,"SOURCE:")==0)
+					sscanf(line,"%s %s",dummy,(tmpl->source));
+				else if (strcasecmp(firstword,"PROFILE_FILE:")==0)
+	  		  sscanf(line,"%s %s",dummy,(tmpl->profileFile));
+	  		else if (strcasecmp(firstword,"DATE:")==0)
+	  		  sscanf(line,"%s %s",dummy,(tmpl->dte));
+	  		else if (strcasecmp(firstword,"UNITS:")==0)
+	  		  sscanf(line,"%s %s",dummy,(tmpl->units));
+	  		else if (strcasecmp(firstword,"ID:")==0)
+	  		  sscanf(line,"%s %s",dummy,(tmpl->user));
+	  		else if (strcasecmp(firstword,"DM_CORRECTION:")==0)
+	  		  sscanf(line,"%s %lf",dummy,&(tmpl->dedispersed));
+	  		else if (strcasecmp(firstword,"NCHAN:")==0)
+	  		  sscanf(line,"%s %d",dummy,&nchan);
+	  		else if (strcasecmp(firstword,"STOKES:")==0)
+				{
+					sscanf(line,"%s %s",dummy,stokesStr);
+					if (strcmp(stokesStr,"I")==0)
+						nstokes=1;
+					else if (strcmp(stokesStr,"Q")==0 || strcmp(stokesStr,"U")==0 || strcmp(stokesStr,"V")==0)
+						nstokes=4;
+				}
+			}
+		}
 	}
-      }
-    }
-  fclose(fin);
+  
+	fclose(fin);
   // Do some checks
-  if (nchan < 0){
+  if (nchan < 0)
+	{
     printf("Have not defined any channels. Unable to continue\n");
     exit(1);
   }
   // Allocate memory for these channels
   tmpl->nchan = nchan;
-  if (tmpl->channelMemoryAllocated == 0){
-    if (!(tmpl->channel = (channelStruct *)malloc(sizeof(channelStruct)*nchan))){
+  if (tmpl->channelMemoryAllocated == 0)
+	{
+		if (!(tmpl->channel = (channelStruct *)malloc(sizeof(channelStruct)*nchan)))
+		{
       printf("ERROR in allocated memory for channels\n");
       exit(1);
     }
     tmpl->channelMemoryAllocated = 1;
     tmpl->nChannelAllocated = nchan;
     for (i=0;i<nchan;i++)
-      tmpl->channel[i].polMemoryAllocated = 0;
-  }
+			tmpl->channel[i].polMemoryAllocated = 0;
+	}
 
   chan = -1;
   stokes = -1;
@@ -104,88 +110,101 @@ void readTemplate(char *file,tmplStruct *tmpl)
     exit(1);
   }
   while (!feof(fin))
-    {
-      if (fgets(line,4096,fin)!=NULL){
-	if (line[0] == '#') // Comment line
-	  {
-	    // Do nothing
-	  }
-	else {
-	  sscanf(line,"%s",firstword);
-	  if (strcasecmp(firstword,"STOKES:")==0){
-	    sscanf(line,"%s %s",dummy,stokesStr);
-	    if (strcmp(stokesStr,"I")==0)
-	      stokes=0;
-	    else if (strcmp(stokesStr,"Q")==0)
-	      stokes = 1;
-	    else if (strcmp(stokesStr,"U")==0)
-	      stokes = 2;
-	    else if (strcmp(stokesStr,"V")==0)
-	      stokes = 3;
-	  } 
-	  else if (strcasecmp(firstword,"FREQUENCY_RANGE:")==0)
-	    {
-	      if (stokes==0)
-		chan++;
-	      sscanf(line,"%s %lf %lf",dummy,&f1,&f2);
-	      if (f1 < f2){
-		tmpl->channel[chan].freqLow = f1;
-		tmpl->channel[chan].freqHigh = f2;
-	      } else {
-		tmpl->channel[chan].freqLow = f2;
-		tmpl->channel[chan].freqHigh = f1;
-	      }
-	      tmpl->channel[chan].nstokes = nstokes;
-	      // Allocate memory
-	      if (tmpl->channel[chan].polMemoryAllocated==0){
-		if (!(tmpl->channel[chan].pol = (polStruct *)malloc(sizeof(polStruct)*nstokes))){
-		  printf("Error in allocated memory for Stokes\n");
-		  exit(1);
-		}
-		tmpl->channel[chan].polMemoryAllocated = 1;
-		for (i=0;i<nstokes;i++)
-		  tmpl->channel[chan].pol[i].compMemoryAllocated = 0;
-	      }
-	      //	    }
-	      tmpl->channel[chan].nPolAllocated = nstokes;
-	    }
-	  else if (strcasecmp(firstword,"NCOMP:")==0)
-	    {
-	      int ncomp;
-	      sscanf(line,"%s %d",dummy,&ncomp);
-	      tmpl->channel[chan].pol[stokes].nComp = ncomp;
-	      tmpl->channel[chan].pol[stokes].stokes = stokes;
-	      if (tmpl->channel[chan].pol[stokes].compMemoryAllocated==0){
-		if (!(tmpl->channel[chan].pol[stokes].comp = (component *)malloc(sizeof(component)*ncomp))){
-		  printf("Error in allocated memory for components\n");
-		  exit(1);
-		}
-		tmpl->channel[chan].pol[stokes].compMemoryAllocated = 1;
-	      }
-	      tmpl->channel[chan].pol[stokes].nCompAllocated = ncomp;
-	      comp=0;
-	    }
-	  else // Look for component
-	    {
-	      char substr[4096];
-	      strcpy(substr,firstword);
-	      substr[4]='\0';
-	      if (strcasecmp(substr,"COMP")==0)
+	{
+		if (fgets(line,4096,fin)!=NULL)
 		{
-		  sscanf(line,"%s %lf %lf %lf %lf %lf %lf",dummy,
-			 &(tmpl->channel[chan].pol[stokes].comp[comp].height),
-			 &(tmpl->channel[chan].pol[stokes].comp[comp].height_err),
-			 &(tmpl->channel[chan].pol[stokes].comp[comp].concentration),
-			 &(tmpl->channel[chan].pol[stokes].comp[comp].concentration_err),
-			 &(tmpl->channel[chan].pol[stokes].comp[comp].centroid),
-			 &(tmpl->channel[chan].pol[stokes].comp[comp].centroid_err));
-		  comp++;
+			if (line[0] == '#') // Comment line
+			{
+				// Do nothing
+			}
+			else 
+			{
+				sscanf(line,"%s",firstword);
+				if (strcasecmp(firstword,"STOKES:")==0)
+				{
+					sscanf(line,"%s %s",dummy,stokesStr);
+					if (strcmp(stokesStr,"I")==0)
+						stokes=0;
+					else if (strcmp(stokesStr,"Q")==0)
+	    		  stokes = 1;
+	    		else if (strcmp(stokesStr,"U")==0)
+	    		  stokes = 2;
+	    		else if (strcmp(stokesStr,"V")==0)
+	    		  stokes = 3;
+				} 
+				else if (strcasecmp(firstword,"FREQUENCY_RANGE:")==0)
+				{
+					if (stokes==0)
+						chan++;
+					sscanf(line,"%s %lf %lf",dummy,&f1,&f2);
+	      
+					if (f1 < f2)
+					{
+						tmpl->channel[chan].freqLow = f1;
+						tmpl->channel[chan].freqHigh = f2;
+					} 
+					else 
+					{
+						tmpl->channel[chan].freqLow = f2;
+						tmpl->channel[chan].freqHigh = f1;
+					}
+					tmpl->channel[chan].nstokes = nstokes;
+	      
+					// Allocate memory
+					if (tmpl->channel[chan].polMemoryAllocated==0)
+					{
+						if (!(tmpl->channel[chan].pol = (polStruct *)malloc(sizeof(polStruct)*nstokes)))
+						{
+							printf("Error in allocated memory for Stokes\n");
+							exit(1);
+						}
+						tmpl->channel[chan].polMemoryAllocated = 1;
+						for (i=0;i<nstokes;i++)
+							tmpl->channel[chan].pol[i].compMemoryAllocated = 0;
+					}
+					tmpl->channel[chan].nPolAllocated = nstokes;
+				}
+				else if (strcasecmp(firstword,"NCOMP:")==0)
+				{
+					int ncomp;
+					sscanf(line,"%s %d",dummy,&ncomp);
+					tmpl->channel[chan].pol[stokes].nComp = ncomp;
+					tmpl->channel[chan].pol[stokes].stokes = stokes;
+					if (tmpl->channel[chan].pol[stokes].compMemoryAllocated==0)
+					{
+						if (!(tmpl->channel[chan].pol[stokes].comp = (component *)malloc(sizeof(component)*ncomp)))
+						{
+							printf("Error in allocated memory for components\n");
+							exit(1);
+						}
+
+						tmpl->channel[chan].pol[stokes].compMemoryAllocated = 1;
+					}
+					tmpl->channel[chan].pol[stokes].nCompAllocated = ncomp;
+					comp=0;
+				}
+				else // Look for component
+				{
+					char substr[4096];
+					strcpy(substr,firstword);
+					substr[4]='\0';
+					if (strcasecmp(substr,"COMP")==0)
+					{
+						sscanf(line,"%s %lf %lf %lf %lf %lf %lf",dummy,
+								&(tmpl->channel[chan].pol[stokes].comp[comp].height),
+								&(tmpl->channel[chan].pol[stokes].comp[comp].height_err),
+								&(tmpl->channel[chan].pol[stokes].comp[comp].concentration),
+								&(tmpl->channel[chan].pol[stokes].comp[comp].concentration_err),
+								&(tmpl->channel[chan].pol[stokes].comp[comp].centroid),
+								&(tmpl->channel[chan].pol[stokes].comp[comp].centroid_err));
+						comp++;
+					}
+				}
+			}
 		}
-	    }
 	}
-      }
-    }
-  fclose(fin);
+  
+	fclose(fin);
 }
 
 

@@ -68,13 +68,13 @@ int main (int argc, char *argv[])
 		{
 			strcpy(inName,argv[k]);
 			createNewfile(inName, sub->fname, ext0);
-			printf ("%s\n", sub->fname);
+			//printf ("%s\n", sub->fname);
 		}
 		else
 		{
 			strcpy(inName,argv[k]);
 			createNewfile(inName, sub->fname, ext);
-			printf ("%s\n", sub->fname);
+			//printf ("%s\n", sub->fname);
 		}
 
 		// open psrfits file
@@ -86,7 +86,7 @@ int main (int argc, char *argv[])
 
 		////////////////////////////////////////////////////
 	
-		printf ("DM0: %.4lf\n", header->dm);
+		//printf ("DM0: %.4lf\n", header->dm);
 	
 		////////////////////////////////////////////////
 		int nphase;
@@ -119,7 +119,7 @@ int main (int argc, char *argv[])
 		p_temp = (double *)malloc(sizeof(double)*npol*nphase);
 		p_temp_deDM = (double *)malloc(sizeof(double)*npol*nphase);
 
-		double phaseShift;
+		long double phaseShift;
 
 		int n;
 		// start to derive toa from different subint

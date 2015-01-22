@@ -103,7 +103,6 @@ int read_prof (subintegration *sub, pheader *header)
 	// move to subint
 	fits_movnam_hdu(fptr, BINARY_TBL, (char *)"SUBINT",0,&status);
 
-	int nbin;
   int frow;
   int felem;
   int nelem;
@@ -117,7 +116,6 @@ int read_prof (subintegration *sub, pheader *header)
       printf( "error while getting the colnum number\n" );
 	}
 
-	nbin = header->nbin;
 	frow = sub->indexSub;
 	felem = 1;
 	nelem = header->nbin*header->nchan*header->npol;
@@ -200,14 +198,12 @@ int read_prof (subintegration *sub, pheader *header)
 	// get the pulse period of this subintegration
 	long double mjd0;  // the mjd of each subint
 	T2Predictor pred;
-	int ret;
-	double period;
 
 	// get the period
 	//print_t2pred(sub->fname);   // output t2pred.dat
 	T2Predictor_Init(&pred);  // prepare the predictor
 	
-	if (ret=T2Predictor_ReadFits(&pred,sub->fname))
+	if (T2Predictor_ReadFits(&pred,sub->fname))
 	{
 		printf("Error: unable to read predictor\n");
 		exit(1);
@@ -243,7 +239,6 @@ int read_std (subintegration *sub, pheader *header)
 		fitsfile *fptr;       // pointer to the FITS file, defined in fitsio.h 
 		int status;
 		int colnum;
-		long int nrows;
 
 		status = 0;
 
@@ -766,7 +761,7 @@ int get_toa (double *s, double *p, subintegration *sub, pheader *header)
 	int nchn=1;
 
 	int nphase = header->nbin;
-	int k;  // k=nphase/2
+	//int k;  // k=nphase/2
 
 	//double amp_s[nchn][nphase/2],amp_p[nchn][nphase/2];  // elements for calculating A7
 	//double phi_s[nchn][nphase/2],phi_p[nchn][nphase/2];
@@ -871,7 +866,7 @@ int get_toa_multi (subintegration *sub, pheader *header)
 	int nchn = header->nchan;
 	int nphase = header->nbin;
 	
-	int k;  // k=nphase/2
+	//int k;  // k=nphase/2
 
 	params param;
 	allocateMemory (&param, nchn, nphase);
@@ -954,7 +949,7 @@ int getToaMultiDM (subintegration *sub, pheader *header)
 	int nchn = header->nchan;
 	int nphase = header->nbin;
 
-	int k;  // k=nphase/2
+	//int k;  // k=nphase/2
 
 	params param;
 	allocateMemory (&param, nchn, nphase);
@@ -969,8 +964,8 @@ int getToaMultiDM (subintegration *sub, pheader *header)
 	preA7(sub->s_multi, sub->p_multi, nphase, nchn, &param);
 	
 	int d, chn;
-	double step;
-	double ini_phase,up_phase,low_phase;
+	//double step;
+	double ini_phase;
 
 	d = InitialGuess (sub->s_multi, sub->p_multi, nphase, nchn, &chn);
 	//printf ("chn: %d\n", chn);
@@ -983,7 +978,7 @@ int getToaMultiDM (subintegration *sub, pheader *header)
 	//d=peak_p-peak_s;
 
 	//printf ("Initial guess: %d\n",d);
-	step=2.0*M_PI/(10.0*nphase);
+	//step=2.0*M_PI/(10.0*nphase);
 
 	//printf ("initial guess: %lf\n", (double)(d)/nphase);
 	//printf ("delay: %lf\n", nphase*(K*param.dm*param.psrFreq)*(1.0/(param.nfreq[chn]*param.nfreq[chn])-1.0/(param.freqRef*param.freqRef))/(2.0*3.1415926));
@@ -1498,7 +1493,7 @@ int preA7_QUV (double *p, int nphase, double *real_p, double *ima_p)
 	return 0;
 }
 
-int rotate (int N, double *real_p, double *real_p_rotate, double *ima_p, double *ima_p_rotate, double rot)
+int rotate (int N, double *real_p, double *real_p_rotate, double *ima_p, double *ima_p_rotate, long double rot)
 {
 	// k is the dimention of amp, N is the dimention of s
 	int i;
@@ -1617,6 +1612,8 @@ int allocateMemory (params *param, int nchn, int nphase)
 		param->p_s[i] = (double *)malloc(sizeof(double)*nphase);
 		param->p_p[i] = (double *)malloc(sizeof(double)*nphase);
 	}
+
+	return 0;
 }
 
 int deallocateMemory (params *param, int nchn)
@@ -1634,6 +1631,8 @@ int deallocateMemory (params *param, int nchn)
 	free(param->a_p);
 	free(param->p_s);
 	free(param->p_p);
+
+	return 0;
 }
 
 // fit DM functions
@@ -1721,7 +1720,7 @@ double chiSquare (const gsl_vector *x, void *param)
 
 int miniseNelderMead (params *param, double ini_guess, double *phase, double *dmFit)
 {
-	double psrFreq = ((params *)param)->psrFreq;
+	//double psrFreq = ((params *)param)->psrFreq;
 
 	const gsl_multimin_fminimizer_type *T = gsl_multimin_fminimizer_nmsimplex2;
 
@@ -1816,7 +1815,8 @@ int covariance (void *param, double phase, double dm, double *errPhase, double *
 	int i,j;
 
 	double s;
-	double c00,c11,c01,nu0;
+	double c00,c11,c01;
+	//double nu0;
 	double c001,c002,c003;
 	double c111,c112;
 	double c121;
@@ -1853,7 +1853,7 @@ int covariance (void *param, double phase, double dm, double *errPhase, double *
 	c00 = 0.0;
 	c11 = 0.0;
 	c01 = 0.0;
-	nu0 = 0.0;
+	//nu0 = 0.0;
 	for (i = 0; i < nchn; i++)
 	{
 		s = 0.0;
@@ -2133,7 +2133,7 @@ void fdfChiSquare2 (const gsl_vector *x, void *params, double *f, gsl_vector *df
 
 int miniseD (params *param, double ini_guess, double *phase, double *dmFit)
 {
-	double psrFreq = ((params *)param)->psrFreq;
+	//double psrFreq = ((params *)param)->psrFreq;
 
 	size_t iter = 0;
 	int status;
@@ -2218,13 +2218,10 @@ void initialiseSub(subintegration *sub, pheader *header)
 {
 	int nphase;
 	int nchn;
-	int nsub;
 	int npol;
-	int mode = sub->mode;
 	
 	nchn = header->nchan; 
 	npol = header->npol; 
-	nsub = header->nsub; 
 	nphase = header->nbin; 	
 
 	sub->rms = (double *)malloc(sizeof(double)*nchn);
