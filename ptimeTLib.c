@@ -1146,7 +1146,8 @@ int form_toa_multi (subintegration *sub, pheader *header)
 	//printf ("dt is %.10Lf +/- %.10Lf\n", dt, e_dt);
 
 	// calculate the TOA
-  sub->t = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs) - (long double)(dt) + (long double)(sub->offs))/86400.0L;
+  sub->t = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs) - (long double)(dt))/86400.0L;
+  //sub->t = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs) - (long double)(dt) + (long double)(sub->offs))/86400.0L;
 		
 	//printf ("offset is %lf\n", offset);
 	//fprintf (fp, "%s  %lf  %.15Lf  %Lf  7\n", fname, frequency, t, e_dt*1e+6);
@@ -1167,7 +1168,8 @@ int form_toa (subintegration *sub, pheader *header)
 	sub->e_dt = ((long double)(sub->e_phase)/M_PI)*((long double)(sub->period[sub->indexChn]))/2.0L;
 
 	// calculate the TOA
-	sub->t = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs) - (long double)(dt) + (long double)(sub->offs))/86400.0L;
+	sub->t = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs) - (long double)(dt))/86400.0L;
+	//sub->t = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs) - (long double)(dt) + (long double)(sub->offs))/86400.0L;
 		
 	return 0;
 }
@@ -1502,17 +1504,24 @@ int rotate (int N, double *real_p, double *real_p_rotate, double *ima_p, double 
 	double amp,cosina,sina;
 	for (i=0;i<N/2;i++)
 	{
-		// calculate the sin(phi) and cos(phi) of the profile
-		amp=sqrt(real_p[i]*real_p[i]+ima_p[i]*ima_p[i]);
-		cosina=real_p[i]/amp;
-		sina=ima_p[i]/amp;
+		if (real_p[i] != 0 || ima_p[i] != 0)
+		{
+			// calculate the sin(phi) and cos(phi) of the profile
+			amp=sqrt(real_p[i]*real_p[i]+ima_p[i]*ima_p[i]);
+			cosina=real_p[i]/amp;
+			sina=ima_p[i]/amp;
 
-		// rotate profile
-		real_p_rotate[i]=amp*(cosina*cos(-i*rot)-sina*sin(-i*rot));
-		ima_p_rotate[i]=amp*(sina*cos(-i*rot)+cosina*sin(-i*rot));
-		//real_p_rotate[i]=amp*(cosina*cos(-i*M_PI)-sina*sin(-i*M_PI));
-		//ima_p_rotate[i]=amp*(sina*cos(-i*M_PI)+cosina*sin(-i*M_PI));
-		
+			// rotate profile
+			real_p_rotate[i]=amp*(cosina*cos(-i*rot)-sina*sin(-i*rot));
+			ima_p_rotate[i]=amp*(sina*cos(-i*rot)+cosina*sin(-i*rot));
+			//real_p_rotate[i]=amp*(cosina*cos(-i*M_PI)-sina*sin(-i*M_PI));
+			//ima_p_rotate[i]=amp*(sina*cos(-i*M_PI)+cosina*sin(-i*M_PI));
+		}
+		else
+		{
+			real_p_rotate[i]=0.0;
+			ima_p_rotate[i]=0.0;
+		}
 	}
 
 	return 0;
@@ -1567,14 +1576,22 @@ int inverse_dft (double *real_p, double *ima_p, int ncount, double *p_new)
 	{
 		if (i < ncount/2)
 		{
-			real = real_p[i];
-			ima = ima_p[i];
-			amp = sqrt(real*real+ima*ima);
-			cosina = real/amp;
-			sina = ima/amp;
+			if (real_p[i] != 0 || ima_p[i] != 0) 
+			{
+				real = real_p[i];
+				ima = ima_p[i];
+				amp = sqrt(real*real+ima*ima);
+				cosina = real/amp;
+				sina = ima/amp;
 
-			cp[i][0] = amp*(cosina);
-			cp[i][1] = amp*(sina);
+				cp[i][0] = amp*(cosina);
+				cp[i][1] = amp*(sina);
+			}
+			else
+			{
+				cp[i][0]=0.0;
+				cp[i][1]=0.0;
+			}
 		}
 		else
 		{
