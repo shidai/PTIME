@@ -25,7 +25,7 @@ int main (int argc, char *argv[])
 	//////////////////////////////////////////////////////
 	char oname[128];   // name of output .tim
 	int tmode;
-	int fitDM;         // fit DM or not; fitDM = 0, don't fit; fitDM = 1, fit
+	int fitDM = 0;         // fit DM or not; fitDM = 0, don't fit; fitDM = 1, fit
 	int nstokes;
 
 	int index, n;
@@ -35,7 +35,7 @@ int main (int argc, char *argv[])
 		{
 			index = i + 1;
 			n = 0;
-			while ( (index + n) < argc && strcmp(argv[index+n],"-std") != 0 && strcmp(argv[index+n],"-pt") != 0 && strcmp(argv[index+n],"-o") != 0 && strcmp(argv[index+n],"-single") != 0)
+			while ( (index + n) < argc && strcmp(argv[index+n],"-std") != 0 && strcmp(argv[index+n],"-pt") != 0 && strcmp(argv[index+n],"-o") != 0 && strcmp(argv[index+n],"-single") != 0 && strcmp(argv[index+n],"-fitDM") != 0 && strcmp(argv[index+n],"-I") != 0 && strcmp(argv[index+n],"-Q") != 0 && strcmp(argv[index+n],"-U") != 0 && strcmp(argv[index+n],"-V") != 0)
 			{
 				n++;
 			}
