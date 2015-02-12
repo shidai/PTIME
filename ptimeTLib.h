@@ -26,8 +26,12 @@ typedef struct subintegration{
 
 	double *wts;
 	double *freq;
+	double *freqSSB;
+
 	double *period;
 	double Cperiod;
+	double batFreq;
+
 	double frequency;
 	double offs;
 

@@ -28,6 +28,9 @@ int main (int argc, char *argv[])
 	int fitDM = 0;         // fit DM or not; fitDM = 0, don't fit; fitDM = 1, fit
 	int nstokes;
 
+	double DM;
+	int DMstatus = 0;
+
 	int index, n;
 	for (i=0;i<argc;i++)
 	{
@@ -35,7 +38,7 @@ int main (int argc, char *argv[])
 		{
 			index = i + 1;
 			n = 0;
-			while ( (index + n) < argc && strcmp(argv[index+n],"-std") != 0 && strcmp(argv[index+n],"-pt") != 0 && strcmp(argv[index+n],"-o") != 0 && strcmp(argv[index+n],"-single") != 0 && strcmp(argv[index+n],"-fitDM") != 0 && strcmp(argv[index+n],"-I") != 0 && strcmp(argv[index+n],"-Q") != 0 && strcmp(argv[index+n],"-U") != 0 && strcmp(argv[index+n],"-V") != 0)
+			while ( (index + n) < argc && strcmp(argv[index+n],"-std") != 0 && strcmp(argv[index+n],"-pt") != 0 && strcmp(argv[index+n],"-o") != 0 && strcmp(argv[index+n],"-single") != 0 && strcmp(argv[index+n],"-fitDM") != 0 && strcmp(argv[index+n],"-I") != 0 && strcmp(argv[index+n],"-Q") != 0 && strcmp(argv[index+n],"-U") != 0 && strcmp(argv[index+n],"-V") != 0 && strcmp(argv[index+n],"-DM") != 0)
 			{
 				n++;
 			}
@@ -84,6 +87,11 @@ int main (int argc, char *argv[])
 		{
 			nstokes = 2; // do freq-dependent matching, and get TOA for each channel
 		}
+		else if (strcmp(argv[i],"-DM")==0)
+		{
+			DM = atof(argv[++i]);
+			DMstatus = 1; // use input DM to de-dispersion
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////
@@ -91,7 +99,7 @@ int main (int argc, char *argv[])
 	FILE *fpt;
 	if ((fpt = fopen(oname, "w+")) == NULL)
 	{
-        fprintf (stdout, "Can't open file\n");
+		fprintf (stdout, "Can't open file\n");
 		exit(1);
 	}
 	
@@ -112,7 +120,11 @@ int main (int argc, char *argv[])
 		loadPrimaryHeader(fp,header);
 		closeFitsFile(fp);
 		////////////////////////////////////////////////////
-	
+
+		if (DMstatus == 1)
+		{
+			header->dm = DM;
+		}
 		printf ("DM0: %.4lf\n", header->dm);
 	
 		////////////////////////////////////////////////

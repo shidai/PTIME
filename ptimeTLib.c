@@ -157,6 +157,45 @@ int read_prof (subintegration *sub, pheader *header)
 	fits_read_col(fptr, TDOUBLE, colnum, frow, felem, nelem, &null, sub->freq, &anynull, &status);           // read the column
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
+	// read channel frequency SSB
+ 
+	double temp[nelem];
+	if ( fits_get_colnum(fptr, CASEINSEN, "FREQ_SSB", &colnum, &status) )           // get the colnum number
+	{
+		printf( "error while getting the colnum number\n" );
+	}
+
+	frow = sub->indexSub;
+  felem = 1;
+  nelem = header->nchan;
+  null = 0;
+  anynull = 0;
+
+	fits_read_col(fptr, TDOUBLE, colnum, frow, felem, nelem, &null, temp, &anynull, &status);           // read the column
+
+	int i;
+	for (i = 0; i < nelem; i++)
+	{
+		sub->freqSSB[i] = temp[i]/1000000.0;
+	}
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
+	// read psr frequency at SSB
+ 
+	if ( fits_get_colnum(fptr, CASEINSEN, "BATFREQ", &colnum, &status) )           // read pulse freq at SSB
+	{
+		printf( "error while getting the colnum number\n" );
+	}
+
+	frow = sub->indexSub;
+  felem = 1;
+  nelem = 1;
+  null = 0;
+  anynull = 0;
+
+	fits_read_col(fptr, TDOUBLE, colnum, frow, felem, nelem, &null, &sub->batFreq, &anynull, &status);           // read the column
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	// read offs
   
 	if ( fits_get_colnum(fptr, CASEINSEN, "OFFS_SUB", &colnum, &status) )           // get the colnum number
@@ -953,9 +992,13 @@ int getToaMultiDM (subintegration *sub, pheader *header)
 
 	params param;
 	allocateMemory (&param, nchn, nphase);
-	param.nfreq = sub->freq;
+
+	//param.nfreq = sub->freq;
+	//param.psrFreq = 1.0/sub->Cperiod;
+	param.nfreq = sub->freqSSB;
+	param.psrFreq = sub->batFreq;
+
 	param.rms = sub->rms;
-	param.psrFreq = 1.0/sub->Cperiod;
 	param.dm = header->dm;
 	param.freqRef = header->freq;
 	//param.freqRef = 1260.0;
@@ -2246,6 +2289,7 @@ void initialiseSub(subintegration *sub, pheader *header)
 
 	sub->wts = (double *)malloc(sizeof(double)*nchn);
 	sub->freq = (double *)malloc(sizeof(double)*nchn);
+	sub->freqSSB = (double *)malloc(sizeof(double)*nchn);
 	sub->period = (double *)malloc(sizeof(double)*nchn);
 
 	sub->s_multi = (double *)malloc(sizeof(double)*nchn*npol*nphase);
@@ -2259,6 +2303,7 @@ void demallocSub(subintegration *sub, pheader *phead)
 
 	free(sub->wts);
 	free(sub->freq);
+	free(sub->freqSSB);
 	free(sub->period);
 
 	free(sub->s_multi);
