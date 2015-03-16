@@ -1189,8 +1189,8 @@ int form_toa_multi (subintegration *sub, pheader *header)
 	//printf ("dt is %.10Lf +/- %.10Lf\n", dt, e_dt);
 
 	// calculate the TOA
-  sub->t = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs) - (long double)(dt))/86400.0L;
-  //sub->t = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs) - (long double)(dt) + (long double)(sub->offs))/86400.0L;
+  //sub->t = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs) - (long double)(dt))/86400.0L;
+  sub->t = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs) - (long double)(dt) + (long double)(sub->offs))/86400.0L;
 		
 	//printf ("offset is %lf\n", offset);
 	//fprintf (fp, "%s  %lf  %.15Lf  %Lf  7\n", fname, frequency, t, e_dt*1e+6);
@@ -1211,8 +1211,8 @@ int form_toa (subintegration *sub, pheader *header)
 	sub->e_dt = ((long double)(sub->e_phase)/M_PI)*((long double)(sub->period[sub->indexChn]))/2.0L;
 
 	// calculate the TOA
-	sub->t = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs) - (long double)(dt))/86400.0L;
-	//sub->t = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs) - (long double)(dt) + (long double)(sub->offs))/86400.0L;
+	//sub->t = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs) - (long double)(dt))/86400.0L;
+	sub->t = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs) - (long double)(dt) + (long double)(sub->offs))/86400.0L;
 		
 	return 0;
 }
