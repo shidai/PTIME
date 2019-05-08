@@ -88,6 +88,7 @@ int print_t2pred ( char *name )
 
 int read_prof (subintegration *sub, pheader *header)
 {  
+	int i;
   fitsfile *fptr;       // pointer to the FITS file, defined in fitsio.h 
   int status;
   int colnum;
@@ -124,6 +125,11 @@ int read_prof (subintegration *sub, pheader *header)
 
 	fits_read_col(fptr, TDOUBLE, colnum, frow, felem, nelem, &null, sub->p_multi, &anynull, &status);           // read the column
 
+	//for (i=0; i<nelem; i++)
+	//{
+	//	printf ("%lf\n", sub->p_multi[i]);
+	//}
+
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	// read weights
  
@@ -159,41 +165,48 @@ int read_prof (subintegration *sub, pheader *header)
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	// read channel frequency SSB
  
-	double temp[nelem];
-	if ( fits_get_colnum(fptr, CASEINSEN, "FREQ_SSB", &colnum, &status) )           // get the colnum number
-	{
-		printf( "error while getting the colnum number\n" );
-	}
+	//double temp[nelem];
+	//if ( fits_get_colnum(fptr, CASEINSEN, "FREQ_SSB", &colnum, &status) )           // get the colnum number
+	//{
+	//	printf( "error while getting the colnum number\n" );
+	//}
 
-	frow = sub->indexSub;
-  felem = 1;
-  nelem = header->nchan;
-  null = 0;
-  anynull = 0;
+	//frow = sub->indexSub;
+  //felem = 1;
+  //nelem = header->nchan;
+  //null = 0;
+  //anynull = 0;
 
-	fits_read_col(fptr, TDOUBLE, colnum, frow, felem, nelem, &null, temp, &anynull, &status);           // read the column
+	//fits_read_col(fptr, TDOUBLE, colnum, frow, felem, nelem, &null, temp, &anynull, &status);           // read the column
 
-	int i;
+	//int i;
+	//for (i = 0; i < nelem; i++)
+	//{
+	//	sub->freqSSB[i] = temp[i]/1000000.0;
+	//}
+
+	// Not using FREQ_SSB
 	for (i = 0; i < nelem; i++)
 	{
-		sub->freqSSB[i] = temp[i]/1000000.0;
+		sub->freqSSB[i] = sub->freq[i];
 	}
 
+	// Not using psr spin frequency at SSB
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	// read psr frequency at SSB
  
-	if ( fits_get_colnum(fptr, CASEINSEN, "BATFREQ", &colnum, &status) )           // read pulse freq at SSB
-	{
-		printf( "error while getting the colnum number\n" );
-	}
+	//if ( fits_get_colnum(fptr, CASEINSEN, "BATFREQ", &colnum, &status) )           // read pulse freq at SSB
+	//{
+	//	printf( "error while getting the colnum number\n" );
+	//}
 
-	frow = sub->indexSub;
-  felem = 1;
-  nelem = 1;
-  null = 0;
-  anynull = 0;
+	//frow = sub->indexSub;
+  //felem = 1;
+  //nelem = 1;
+  //null = 0;
+  //anynull = 0;
 
-	fits_read_col(fptr, TDOUBLE, colnum, frow, felem, nelem, &null, &sub->batFreq, &anynull, &status);           // read the column
+	//fits_read_col(fptr, TDOUBLE, colnum, frow, felem, nelem, &null, &sub->batFreq, &anynull, &status);           // read the column
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	// read offs
@@ -485,6 +498,7 @@ double A9 (double phase, params param)
 		}
 	}
 	
+	//printf ("line 494, %lf %lf\n", A9, sum);
 	A9=A9/sum;
 
 	return A9;
@@ -796,6 +810,7 @@ int get_toa (double *s, double *p, subintegration *sub, pheader *header)
 // initial guess of phase shift is added
 // try to do two-dim template matching
 {
+	//printf ("I am here\n");
 	//int nphase=1024;
 	int nchn=1;
 
@@ -808,6 +823,11 @@ int get_toa (double *s, double *p, subintegration *sub, pheader *header)
 	allocateMemory (&param, nchn, nphase);
 	//double amp_s[nchn][NP],amp_p[nchn][NP];  // elements for calculating A7
 	//double phi_s[nchn][NP],phi_p[nchn][NP];  // the second dim should be NP, which is large enough for different observations
+	//int i;
+	//for (i=0; i<1024; i++)
+	//{
+	//	printf ("%lf %lf\n", s[i], p[i]);
+	//}
 
 	preA7(s, p, nphase, nchn, &param);
 	//preA7(&k, amp_s, amp_p, phi_s, phi_p, s, p, nphase, nchn);
@@ -881,6 +901,7 @@ int get_toa (double *s, double *p, subintegration *sub, pheader *header)
 	double errphase, errb;	
 
 	error(phase,b,&errphase,&errb, param);
+	printf ("%.10lf %.10lf %lf\n", phase, b, errphase);  // microseconds
 	//printf ("%.10lf %.10lf\n", ((phase/3.1415926)/(psrfreq*2.0))*1.0e+6, ((errphase/3.1415926)/(psrfreq*2.0))*1.0e+6);  // microseconds
 	//printf ("%.10lf %.10lf\n", ((phase/3.1415926)*4.569651/2.0)*1.0e+3, ((errphase/3.1415926)*4.569651/2.0)*1.0e+3);  // microseconds
 	//printf ("errphase %.10lf \n", ((errphase/3.1415926)*5.75/2.0)*1.0e+6);
@@ -994,9 +1015,11 @@ int getToaMultiDM (subintegration *sub, pheader *header)
 	allocateMemory (&param, nchn, nphase);
 
 	//param.nfreq = sub->freq;
-	//param.psrFreq = 1.0/sub->Cperiod;
+	param.psrFreq = 1.0/sub->Cperiod;
 	param.nfreq = sub->freqSSB;
-	param.psrFreq = sub->batFreq;
+	//param.psrFreq = sub->batFreq;
+	
+	param.wts = sub->wts;
 
 	param.rms = sub->rms;
 	param.dm = header->dm;
@@ -1060,16 +1083,20 @@ int getToaMultiDM (subintegration *sub, pheader *header)
 	//errphase = 0.01;
 	//errDm = 0.01;
 
+	double mjd;
+	mjd = header->imjd + header->smjd/86400.0;
 	printf ("multi-template\n");
 	//printf ("Phase shift: %.10lf+-%.10lf\n", phase, errphase);  // microseconds
 	//printf ("Phase shift: %.10lf+-%.10lf\n", ((phase/3.1415926)/(psrfreq*2.0))*1.0e+6, ((errphase/3.1415926)/(psrfreq*2.0))*1.0e+6);  // microseconds
-	printf ("DM: %.10lf   %.10lf\n", dmFit, errDm);
+	printf ("DM: %.4lf   %.10lf   %.10lf\n", mjd, dmFit, errDm);
 	//printf ("%.10lf %.10lf\n", ((phase/3.1415926)*4.569651/2.0)*1.0e+3, ((errphase/3.1415926)*4.569651/2.0)*1.0e+3);  // microseconds
 	//printf ("errphase %.10lf \n", ((errphase/3.1415926)*5.75/2.0)*1.0e+6);
 	//printf ("errb %.10lf \n", errb);
 	
 	sub->phase = phase;
 	sub->e_phase = errphase;
+	sub->dmFit = dmFit;
+	sub->dmErr = errDm;
 
 	deallocateMemory (&param, nchn);
 
@@ -1105,6 +1132,7 @@ int preA7 (double *s, double *p, int nphase, int nchn, params *param)
 	    {
 		    s_temp[j]=s[i*nphase + j];
 		    p_temp[j]=p[i*nphase + j];
+				//printf ("%lf %lf\n", s_temp[j], p_temp[j]);
 	    }
 
 	    dft_profiles(nphase,s_temp,out_s);
@@ -1135,6 +1163,8 @@ int preA7 (double *s, double *p, int nphase, int nchn, params *param)
 		    param->a_p[i][j]=sqrt(r_p[j]*r_p[j]+im_p[j]*im_p[j]);
 		    param->p_s[i][j]=atan2(im_s[j],r_s[j]);
 		    param->p_p[i][j]=atan2(im_p[j],r_p[j]);
+		    //printf ("%lf %lf %lf %lf\n", param->a_s[i][j], param->a_p[i][j], param->p_s[i][j], param->a_p[i][j]);
+		    //printf ("%lf %lf %lf %lf\n", r_s[j], r_p[j], im_s[j], im_p[j]);
 		    //printf ("%lf %lf %lf\n", r_s[i], im_s[i], amp_s[i]);
 		    //printf ("%lf %lf %lf\n", r_p[i], im_p[i], amp_p[i]);
 		    //printf ("%lf\n", amp_s[i]);
@@ -1715,6 +1745,7 @@ double chiSquare (const gsl_vector *x, void *param)
 	int num = ((params *)param)->num;
 	double psrFreq = ((params *)param)->psrFreq;
 	double *nfreq = ((params *)param)->nfreq;
+	double *wts = ((params *)param)->wts;
 	double *rms = ((params *)param)->rms;
 	double **a_s = ((params *)param)->a_s;
 	double **a_p = ((params *)param)->a_p;
@@ -1759,20 +1790,23 @@ double chiSquare (const gsl_vector *x, void *param)
 	double P, PS, S;
 	for (i = 0; i < nchn; i++)
 	{
-		P = 0.0;
-		PS = 0.0;
-		S = 0.0;
-		//printf ("nchn freq: %lf\n",nfreq[i]);
-		phaseNchn = phase - (2.0*M_PI)*(K*dm*psrFreq)*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef));
-		//phaseNchn = phase - (2.0*M_PI)*(K*dm*psrFreq)*(1.0/(nfreq[i]*nfreq[i]));
-		for (j = 0; j < num; j++)
+		if (wts[i] != 0.0)
 		{
-			PS += a_s[i][j]*a_p[i][j]*cos(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
-			S += a_s[i][j]*a_s[i][j];
-			P += a_p[i][j]*a_p[i][j];
-		//printf ("%lf %lf\n", a_s[i], p_s[i]);
+			P = 0.0;
+			PS = 0.0;
+			S = 0.0;
+			//printf ("nchn freq: %lf\n",nfreq[i]);
+			phaseNchn = phase - (2.0*M_PI)*(K*dm*psrFreq)*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef));
+			//phaseNchn = phase - (2.0*M_PI)*(K*dm*psrFreq)*(1.0/(nfreq[i]*nfreq[i]));
+			for (j = 0; j < num; j++)
+			{
+				PS += a_s[i][j]*a_p[i][j]*cos(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
+				S += a_s[i][j]*a_s[i][j];
+				P += a_p[i][j]*a_p[i][j];
+			//printf ("%lf %lf\n", a_s[i], p_s[i]);
+			}
+			chi2 += (P-PS*PS/S)/(rms[i]*rms[i]);
 		}
-		chi2 += (P-PS*PS/S)/(rms[i]*rms[i]);
 	}
 	
 	return chi2;
@@ -1864,6 +1898,7 @@ int covariance (void *param, double phase, double dm, double *errPhase, double *
 	double psrFreq = ((params *)param)->psrFreq;
 	double *nfreq = ((params *)param)->nfreq;
 	double *rms = ((params *)param)->rms;
+	double *wts = ((params *)param)->wts;
 	double **a_s = ((params *)param)->a_s;
 	double **a_p = ((params *)param)->a_p;
 	double **p_s = ((params *)param)->p_s;
@@ -1916,38 +1951,41 @@ int covariance (void *param, double phase, double dm, double *errPhase, double *
 	//nu0 = 0.0;
 	for (i = 0; i < nchn; i++)
 	{
-		s = 0.0;
-		c001 = 0.0;
-		c002 = 0.0;
-		c003 = 0.0;
-		c111 = 0.0;
-		c112 = 0.0;
-		c121 = 0.0;
-		//printf ("nchn freq: %lf\n",nfreq[i]);
-		phaseNchn = phase - (A*dm)*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef));
-		//phaseNchn = phase - (2.0*3.1415926)*(K*dm*psrFreq)*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef));
-		//printf ("phaseNchn: %lf %lf\n", nfreq[i], phaseNchn);
-		//printf ("phaseNchn: %lf %.10lf\n", nfreq[i], (1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef)));
-		for (j = 0; j < num; j++)
+		if (wts[i] != 0.0)
 		{
-			s += a_s[i][j]*a_s[i][j];
-			c001 += a_s[i][j]*a_p[i][j]*cos(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
-			c002 += (j+1)*a_s[i][j]*a_p[i][j]*sin(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
-			c003 += (j+1)*(j+1)*a_s[i][j]*a_p[i][j]*cos(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
+			s = 0.0;
+			c001 = 0.0;
+			c002 = 0.0;
+			c003 = 0.0;
+			c111 = 0.0;
+			c112 = 0.0;
+			c121 = 0.0;
+			//printf ("nchn freq: %lf\n",nfreq[i]);
+			phaseNchn = phase - (A*dm)*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef));
+			//phaseNchn = phase - (2.0*3.1415926)*(K*dm*psrFreq)*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef));
+			//printf ("phaseNchn: %lf %lf\n", nfreq[i], phaseNchn);
+			//printf ("phaseNchn: %lf %.10lf\n", nfreq[i], (1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef)));
+			for (j = 0; j < num; j++)
+			{
+				s += a_s[i][j]*a_s[i][j];
+				c001 += a_s[i][j]*a_p[i][j]*cos(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
+				c002 += (j+1)*a_s[i][j]*a_p[i][j]*sin(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
+				c003 += (j+1)*(j+1)*a_s[i][j]*a_p[i][j]*cos(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
 
-			c111 += ((j+1)*A*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef)))*a_s[i][j]*a_p[i][j]*sin(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
-			//c111 += ((j+1)*K*psrFreq*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef)))*a_s[i][j]*a_p[i][j]*sin(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
-			c112 += pow(((j+1)*A*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef))),2.0)*a_s[i][j]*a_p[i][j]*cos(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
-			//c112 += pow(((j+1)*K*psrFreq*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef))),2.0)*a_s[i][j]*a_p[i][j]*cos(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
+				c111 += ((j+1)*A*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef)))*a_s[i][j]*a_p[i][j]*sin(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
+				//c111 += ((j+1)*K*psrFreq*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef)))*a_s[i][j]*a_p[i][j]*sin(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
+				c112 += pow(((j+1)*A*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef))),2.0)*a_s[i][j]*a_p[i][j]*cos(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
+				//c112 += pow(((j+1)*K*psrFreq*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef))),2.0)*a_s[i][j]*a_p[i][j]*cos(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
 
-			c121 += ((j+1)*(j+1)*A*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef)))*a_s[i][j]*a_p[i][j]*cos(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
-			//c121 += ((j+1)*(j+1)*K*psrFreq*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef)))*a_s[i][j]*a_p[i][j]*cos(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
-		//printf ("%lf %lf\n", a_s[i], p_s[i]);
+				c121 += ((j+1)*(j+1)*A*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef)))*a_s[i][j]*a_p[i][j]*cos(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
+				//c121 += ((j+1)*(j+1)*K*psrFreq*(1.0/(nfreq[i]*nfreq[i])-1.0/(freqRef*freqRef)))*a_s[i][j]*a_p[i][j]*cos(p_s[i][j]-p_p[i][j]+(j+1)*phaseNchn);
+			//printf ("%lf %lf\n", a_s[i], p_s[i]);
+			}
+			c00 += 2.0*((-c002*c002+c001*c003)/s)/(rms[i]*rms[i]);
+			c11 += 2.0*((-c111*c111+c001*c112)/s)/(rms[i]*rms[i]);
+			c01 += 2.0*((-c111*c002+c001*c121)/s)/(rms[i]*rms[i]);
+			//nu0 += (1.0/(nfreq[i]*nfreq[i]))*((-c002*c002+c001*c003)/s)/(rms[i]*rms[i]);
 		}
-		c00 += 2.0*((-c002*c002+c001*c003)/s)/(rms[i]*rms[i]);
-		c11 += 2.0*((-c111*c111+c001*c112)/s)/(rms[i]*rms[i]);
-		c01 += 2.0*((-c111*c002+c001*c121)/s)/(rms[i]*rms[i]);
-		//nu0 += (1.0/(nfreq[i]*nfreq[i]))*((-c002*c002+c001*c003)/s)/(rms[i]*rms[i]);
 	}
 
 	printf ("c00: %lf; c11: %lf; c12: %lf\n", c00, c11, c01);
@@ -2310,3 +2348,121 @@ void demallocSub(subintegration *sub, pheader *phead)
 	free(sub->p_multi);
 	free(sub);
 }
+
+int cal_prof_resi (double *prof, double *template, double phase_shift, pheader *header, double *prof_resi)
+{
+	int nphase = header->nbin;
+	int j;
+	    
+	double p_new[nphase], p_new_noBL[nphase], template_noBL[nphase];
+	double real_p[nphase/2],ima_p[nphase/2];
+	double real_p_rotate[nphase/2],ima_p_rotate[nphase/2];
+
+	int index;
+	double frac_off = 0.2;
+	double peak_p, peak_s;
+	
+	preA7_QUV (prof, nphase, real_p, ima_p);
+	//long double rot = -2.0*M_PI*(phase_shift - floor(phase_shift));
+	//long double rot = -2.0*M_PI*phase_shift;
+	long double rot = phase_shift;
+	rotate (nphase, real_p, real_p_rotate, ima_p, ima_p_rotate, rot);
+
+	inverse_dft (real_p_rotate, ima_p_rotate, nphase, p_new);
+	
+	///////////////////////////////////////////
+	index = def_off_pulse (nphase, p_new, frac_off);
+	remove_baseline (p_new, index, frac_off, nphase, p_new_noBL);
+
+	index = def_off_pulse (nphase, template, frac_off);
+	remove_baseline (template, index, frac_off, nphase, template_noBL);
+	///////////////////////////////////////////
+	peak_p = find_peak_value (nphase, p_new_noBL);
+	peak_s = find_peak_value (nphase, template_noBL);
+	
+	for (j = 0; j < nphase; j++)
+	{
+		prof_resi[j] = p_new_noBL[j]/peak_p - template_noBL[j]/peak_s;
+		//prof_resi[j] = p_new_noBL[j]/peak_p;
+		//prof_resi[j] = template_noBL[j]/peak_s;
+	}
+
+	return 0;
+}
+
+long double phaseShiftDM_ptimeT (subintegration *sub, pheader *header, T2Predictor pred)
+{
+	//double dm = header->dm;
+	double dm = sub->dmFit;
+	double freq = sub->freq[sub->indexChn];
+	double psrFreq = 1.0/sub->Cperiod;
+	double freqRef = header->freq;
+
+	long double mjd0;
+	//mjd0 = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs))/86400.0L;
+	mjd0 = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs) + (long double)(sub->offs))/86400.0L;
+
+	long double phase;
+	long double phaseShift;
+
+	phase = T2Predictor_GetPhase(&pred, mjd0, freq);
+	phaseShift = (2.0*M_PI)*(phase - floor(phase));
+	printf ("Frequency: %lf; phase shift: %lf\n", freq, phaseShift);
+
+	return phaseShift;
+}
+
+int deDM_ptimeT (int nphase, double *in, long double phaseShift, double *out)
+// de-disperse 
+{
+	int i, j;
+	
+	double I_in[nphase];
+	double I_out[nphase];
+	
+	for (j = 0; j < nphase; j++)
+	{
+			I_in[j] = in[j];
+	}
+
+	double I_in_real[nphase/2], I_in_ima[nphase/2];
+
+	preA7_QUV (I_in, nphase, I_in_real, I_in_ima);
+
+	double I_out_real[nphase/2], I_out_ima[nphase/2];
+	rotate (nphase, I_in_real, I_out_real, I_in_ima, I_out_ima, phaseShift);
+
+	inverse_dft (I_out_real, I_out_ima, nphase, I_out);
+
+	for (j = 0; j < nphase; j++)
+	{
+			out[j] = I_out[j];
+	}
+
+	return 0;
+}
+
+void runTempo2(pheader *header, double segLength, int nfreq, int ntime, char *eph)
+{
+  char execString[1024];
+  double seg_length = segLength;
+  int nfreqcoeff = nfreq;
+  int ntimecoeff = ntime;
+  //printf("nfreqCoeff: %d\n", nfreqcoeff);
+
+  double freq1 = header->freq - fabs(header->bw)/2.0; 
+  double freq2 = header->freq + fabs(header->bw)/2.0;
+  printf("Frequency %lf %lf\n", freq1, freq2);
+
+  long double mjd1 = header->imjd + header->smjd/86400.0L - 60*60/86400.0L; // MUST FIX
+  long double mjd2 = header->imjd + header->smjd/86400.0L + (header->nsub)*60.0/86400.0L + 60*60/86400.0L; // MUST FIX
+
+	
+	sprintf(execString,"tempo2 -pred \"%s %Lf %Lf %g %g %d %d %g\" -f %s","PKS",mjd1,mjd2,freq1,freq2,ntimecoeff,nfreqcoeff,seg_length,eph);
+ 
+	printf("Running tempo2 to get predictor\n");
+
+  system(execString);
+  printf("Complete running tempo2\n");
+}
+

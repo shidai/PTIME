@@ -9,6 +9,7 @@
 #include "readPfits.h"
 //#include "ptime.h"
 #include <gsl/gsl_multimin.h>
+#include "tempo2pred.h"
 
 #define NP 2048
 #define K 4149.37759 // 1.0/2.41
@@ -40,6 +41,9 @@ typedef struct subintegration{
 	double phase, e_phase;
 	long double e_dt;  
 	long double t;       // TOA
+
+	double dmFit;
+	double dmErr;
 } subintegration;
 
 typedef struct params {
@@ -49,6 +53,7 @@ typedef struct params {
 	double psrFreq;
 	double dm;
 	double *nfreq;
+	double *wts;
 	double *rms;
 	double **a_s; 
 	double **a_p; 
@@ -89,6 +94,10 @@ int align (int N, double phase, double b, double a, double *real_p, double *real
 int inverse_dft (double *real_p, double *ima_p, int ncount, double *p_new);
 int allocateMemory (params *param, int nchn, int nphase);
 int deallocateMemory (params *param, int nchn);
+int cal_prof_resi (double *prof, double *template, double phase_shift, pheader *header, double *prof_resi);
+int deDM_ptimeT (int nphase, double *in, long double phaseShift, double *out);
+long double phaseShiftDM_ptimeT (subintegration *sub, pheader *header, T2Predictor pred);
+void runTempo2(pheader *header, double segLength, int nfreq, int ntime, char *eph);
 
 double chiSquare (const gsl_vector *x, void *param);
 int miniseNelderMead (params *param, double guess, double *phase, double *dmFit);

@@ -24,11 +24,12 @@ int main (int argc, char *argv[])
 
 	//////////////////////////////////////////////////////
 	char inName[128];   // name of input data file
+	char predName[128];   // name of tempo2 predictor file
 	char ext[128];   // extension of new data file
 	char ext0[]="D";   // default extension of new data file
 	int nstokes;
 	int mode = 0;  // default: creat new file ".D"
-	int pmode = 0;  // default: use predictor
+	int pmode = 0;  // default: use predictor; 1: don't use any predictor; 2: use a specified predictor
 
 	int index, n;
 	for (i=0;i<argc;i++)
@@ -37,7 +38,7 @@ int main (int argc, char *argv[])
 		{
 			index = i + 1;
 			n = 0;
-			while ( (index + n) < argc && strcmp(argv[index+n],"-e") != 0 && strcmp(argv[index+n],"-np") != 0 )
+			while ( (index + n) < argc && strcmp(argv[index+n],"-e") != 0 && strcmp(argv[index+n],"-np") != 0 && strcmp(argv[index+n],"-pred") != 0)
 			{
 				n++;
 			}
@@ -50,6 +51,11 @@ int main (int argc, char *argv[])
 		else if (strcmp(argv[i],"-np") == 0)  // not use predictor
 		{
 			pmode = 1;  
+		}
+		else if (strcmp(argv[i],"-pred") == 0)  // read predictor from a specified file
+		{
+			strcpy(predName,argv[++i]);
+			pmode = 2;  
 		}
 	}
 
@@ -104,10 +110,23 @@ int main (int argc, char *argv[])
 
     initialiseSub(sub, header);
 
-		if (T2Predictor_ReadFits(&pred,sub->fname))
+		if (sub->mode == 0)
 		{
-			printf("Error: unable to read predictor\n");
-			exit(1);
+			printf("Reading predictor from the header of %s\n", sub->fname);
+			if (T2Predictor_ReadFits(&pred,sub->fname))
+			{
+				printf("Error: unable to read predictor\n");
+				exit(1);
+			}
+		}
+		else if (sub->mode == 2)
+		{
+			printf("Reading predictor from %s\n", predName);
+			if (T2Predictor_Read(&pred, predName))
+			{
+				printf("Error: unable to read predictor\n");
+				exit(1);
+			}
 		}
 
 		////////////////////////////////////////////////////////////////////////////////
@@ -176,3 +195,55 @@ int main (int argc, char *argv[])
 
 	return 0;
 }
+
+//long double phaseShiftDM (subintegration *sub, pheader *header, T2Predictor pred)
+//{
+//	//double dm = header->dm;
+//	double dm = sub->dmFit;
+//	double freq = sub->freq[sub->indexChn];
+//	double psrFreq = 1.0/sub->Cperiod;
+//	double freqRef = header->freq;
+//
+//	long double mjd0;
+//	//mjd0 = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs))/86400.0L;
+//	mjd0 = (long double)(header->imjd) + ((long double)(header->smjd) + (long double)(header->stt_offs) + (long double)(sub->offs))/86400.0L;
+//
+//	long double phase;
+//	long double phaseShift;
+//
+//	phase = T2Predictor_GetPhase(&pred, mjd0, freq);
+//	phaseShift = (2.0*M_PI)*(phase - floor(phase));
+//
+//	return phaseShift;
+//}
+//
+//int deDM (int nphase, double *in, long double phaseShift, double *out)
+//// de-disperse 
+//{
+//	int i, j;
+//	
+//	double I_in[nphase];
+//	double I_out[nphase];
+//	
+//	for (j = 0; j < nphase; j++)
+//	{
+//		I_in[j] = in[j];
+//	}
+//
+//	double I_in_real[nphase/2], I_in_ima[nphase/2];
+//
+//	preA7_QUV (I_in, nphase, I_in_real, I_in_ima);
+//
+//	double I_out_real[nphase/2], I_out_ima[nphase/2];
+//
+//	rotate (nphase, I_in_real, I_out_real, I_in_ima, I_out_ima, phaseShift);
+//	inverse_dft (I_out_real, I_out_ima, nphase, I_out);
+//
+//	for (j = 0; j < nphase; j++)
+//	{
+//		out[i*nphase+j] = I_out[j];
+//	}
+//
+//	return 0;
+//}
+

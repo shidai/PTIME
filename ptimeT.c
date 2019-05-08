@@ -12,6 +12,8 @@
 
 int main (int argc, char *argv[])
 {
+	FILE *prof_resi; // file for profile residuals
+	char prof_resi_name[128]; // file name of profile residuals
 	int h,i,j,k;
 
 	pheader *header;
@@ -144,8 +146,20 @@ int main (int argc, char *argv[])
 		double s_temp[nphase];
 		double p_temp[nphase];
 
+		double resi[nphase];
+
 		initialiseSub(sub, header);
 		read_std (sub, header);
+
+		/////////////////////////////////////////////////////////////////////////////////
+		// open file to write profile residuals 
+		strcpy(prof_resi_name, sub->fname);
+		strcat(prof_resi_name, ".resi");
+		if ((prof_resi = fopen(prof_resi_name, "w+")) == NULL)
+		{
+			fprintf (stdout, "Can't open file\n");
+			exit(1);
+		}
 
 		// start to derive toa from different subint
 		for (h = 1; h <= nsub; h++)
@@ -154,53 +168,70 @@ int main (int argc, char *argv[])
 			// read profiles from data file
 			read_prof(sub, header);
 
-			// get pulse period of this subintegration
-
+			// always start with individual channels to get a first guess
 			// start to derive toas for different channels
 			for (i = 0; i < nchn; i++)
 			{
-				sub->indexChn = i;
-				for (j = 0; j < nphase; j++)
+				if (sub->wts[i] != 0.0)
 				{
-					//printf ("%lf %lf\n", p_multi[j], s[j]);
-					//s_multi[i*nphase + j] = s[j];
-					if (nstokes == 0)
+					sub->indexChn = i;
+					for (j = 0; j < nphase; j++)
 					{
-						p_temp[j] = sub->p_multi[nstokes*nchn*nphase + i*nphase + j];
-						s_temp[j] = sub->s_multi[nstokes*nchn*nphase + i*nphase + j];
+						if (nstokes == 0)
+						{
+							p_temp[j] = sub->p_multi[nstokes*nchn*nphase + i*nphase + j];
+							s_temp[j] = sub->s_multi[nstokes*nchn*nphase + i*nphase + j];
+						}
+						else if (nstokes == 1)
+						{
+							p_temp[j] = sub->p_multi[nstokes*nchn*nphase + i*nphase + j];
+							s_temp[j] = sub->s_multi[nstokes*nchn*nphase + i*nphase + j];
+						}
+						else if (nstokes == 2)
+						{
+							p_temp[j] = sub->p_multi[nstokes*nchn*nphase + i*nphase + j];
+							s_temp[j] = sub->s_multi[nstokes*nchn*nphase + i*nphase + j];
+						}
+						else if (nstokes == 3)
+						{
+							p_temp[j] = sub->p_multi[nstokes*nchn*nphase + i*nphase + j];
+							s_temp[j] = sub->s_multi[nstokes*nchn*nphase + i*nphase + j];
+						}
 					}
-					else if (nstokes == 1)
-					{
-						p_temp[j] = sub->p_multi[nstokes*nchn*nphase + i*nphase + j];
-						s_temp[j] = sub->s_multi[nstokes*nchn*nphase + i*nphase + j];
-					}
-					else if (nstokes == 2)
-					{
-						p_temp[j] = sub->p_multi[nstokes*nchn*nphase + i*nphase + j];
-						s_temp[j] = sub->s_multi[nstokes*nchn*nphase + i*nphase + j];
-					}
-					else if (nstokes == 3)
-					{
-						p_temp[j] = sub->p_multi[nstokes*nchn*nphase + i*nphase + j];
-						s_temp[j] = sub->s_multi[nstokes*nchn*nphase + i*nphase + j];
-					}
-					//s_temp[j] = s_multi[i*nphase + j];
-				}
 
-				// calculate toa, rms for each channel
-				get_toa (s_temp, p_temp, sub, header);
+					// calculate toa, rms for each channel
+					get_toa (s_temp, p_temp, sub, header);
 
-				// if tmode == 1, get TOA for each channel, and transform phase shifts to MJD TOAs
-				if (tmode == 1)
-				{
-					form_toa (sub, header);
-					fprintf (fpt, "%s  %lf  %.15Lf  %Lf  7 -f c%d\n", sub->fname, sub->freq[sub->indexChn], sub->t, sub->e_dt*1e+6, i+1);
+					// if tmode == 1, get TOA for each channel, and transform phase shifts to MJD TOAs
+					if (tmode == 1)
+					{
+						// calculate profile residuals for each channel
+						cal_prof_resi (p_temp, s_temp, sub->phase, header, resi);
+
+						form_toa (sub, header);
+						if (isnan(sub->e_dt))
+						{
+							printf ("%s  %lf  %.15Lf  %Lf\n", sub->fname, sub->freq[sub->indexChn], sub->t, sub->e_dt*1e+6);
+						}
+						else
+						{
+							fprintf (fpt, "%s  %lf  %.15Lf  %Lf  7 -f c%d\n", sub->fname, sub->freq[sub->indexChn], sub->t, sub->e_dt*1e+6, i+1);
+						}
+
+						// print out profile residuals
+						for (j = 0; j < nphase; j++)
+						{
+							//fprintf (prof_resi, "%d %d %d %lf\n", h, i, j, p_temp[j]);
+							//fprintf (prof_resi, "%d %d %d %lf %lf %lf\n", h, i, j, resi[j], p_temp[j], s_temp[j]);
+							fprintf (prof_resi, "%d %d %d %lf %lf %lf\n", h, i, j, p_temp[j], s_temp[j], resi[j]);
+						}
+					}
 				}
 			}
 
-			// if tmode == 0, do freq-dependent template matching, get one phase shift
 			if (tmode == 0)
 			{
+				// if tmode == 0, do freq-dependent template matching, get one phase shift
 				if (fitDM == 0 )
 				{
 					get_toa_multi (sub, header);
@@ -214,8 +245,55 @@ int main (int argc, char *argv[])
 				form_toa_multi (sub, header);
 
 				fprintf (fpt, "%s  %lf  %.15Lf  %Lf  7\n", sub->fname, sub->frequency, sub->t, sub->e_dt*1e+6);
+
+				/*
+				int ret;
+				double segLength = 1800.0;
+				int nfreq = 32;
+				int ntime = 16;
+				char eph[128];
+				strcpy(eph, "test.par");
+
+				T2Predictor pred;
+				T2Predictor_Init(&pred);  // prepare the predictor
+				runTempo2(header,segLength,nfreq,ntime,eph);
+
+				//if (T2Predictor_ReadFits(&pred,sub->fname))
+				if (ret=T2Predictor_Read(&pred,(char *)"t2pred.dat"))
+				{
+					printf("Error: unable to read predictor\n");
+					exit(1);
+				}
+
+				// calculate profile residuals
+				for (i = 0; i < nchn; i++)
+				{
+					sub->indexChn = i;
+					for (j = 0; j < nphase; j++)
+					{
+						p_temp[j] = sub->p_multi[nstokes*nchn*nphase + i*nphase + j];
+						s_temp[j] = sub->s_multi[nstokes*nchn*nphase + i*nphase + j];
+					}
+					// dedisperse
+					double p_temp_deDM[nphase];
+					long double phaseShift;
+					phaseShift = phaseShiftDM_ptimeT (sub,header,pred);
+					deDM_ptimeT (nphase, p_temp, phaseShift, p_temp_deDM);
+
+					// print out profile residuals
+					for (j = 0; j < nphase; j++)
+					{
+						//fprintf (prof_resi, "%d %d %d %lf %lf\n", h, i, j, p_temp[j], p_temp_deDM[j]);
+						fprintf (prof_resi, "%d %d %d %lf %lf %lf\n", h, i, j, s_temp[j], p_temp[j], p_temp_deDM[j]);
+					}
+
+				}
+				*/
 			}
 		}
+
+		if (fclose (prof_resi) != 0)
+			fprintf (stderr, "Error closing\n");
 	}
 
 	if (fclose (fpt) != 0)

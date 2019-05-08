@@ -159,7 +159,7 @@ void loadPrimaryHeader(fitsfile *fp,pheader *phead)
 		if (phead->chanbw < 0 && phead->bw > 0)
 			phead->bw*=-1;
       
-		fits_read_key(fp,TFLOAT,(char *)"TBIN",&(phead->tsamp),NULL,&status);
+		//fits_read_key(fp,TFLOAT,(char *)"TBIN",&(phead->tsamp),NULL,&status);  // UWL data don't have TBIN
 	}
   
 	fits_movnam_hdu(fp,BINARY_TBL,(char *)"PSRPARAM",1,&status);
@@ -204,7 +204,7 @@ void loadPrimaryHeader(fitsfile *fp,pheader *phead)
 			}
 	  //	  printf("Read: %s\n",line[0]);
 		}
-      //      printf("Lenght = %d\n",len);
+    //printf("%f %f\n", phead->dm, phead->period);
   
 		free(line[0]);
 		free(line);
